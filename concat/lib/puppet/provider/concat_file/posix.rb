@@ -26,7 +26,7 @@ Puppet::Type.type(:concat_file).provide(:posix) do
     end
     
     def dump
-        warning impl.dump
+        puts impl.dump
     end
     
     def find_lost

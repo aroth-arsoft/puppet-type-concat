@@ -472,8 +472,12 @@ Puppet::Type.newtype(:concat_file) do
             return :absent unless stat = @resource.stat
 
             @actual_content = provider.read
-            @content = provider.read
+            @content = provider.content
             begin
+                #puts 'should:'
+                #puts @content
+                #puts 'has:'
+                #puts @actual_content
                 self.should = resource.parameter(:checksum).sum(@content)
                 ret = resource.parameter(:checksum).sum(@actual_content)
                 debug "retrieve content got #{ret} should #{self.should}"
@@ -662,6 +666,8 @@ Puppet::Type.newtype(:concat_file) do
             nil
         end
     end
+
+    # Autorequire the file
     autorequire(:file) do
         req = []
         path = self[:path]
@@ -669,15 +675,13 @@ Puppet::Type.newtype(:concat_file) do
             path = self[:name]
         end
         req << path
-
-        info 'autorequire file req=' + req.inspect
+        #info 'autorequire file req=' + req.inspect
         req
     end
 
-    # Autorequire the nearest ancestor directory found in the catalog.
+    # Autorequire the all fragments
     autorequire(:concat_fragment) do
-        debug 'autorequire concat_fragment'
-        #raise 'autorequire concat_file'
+        #debug 'autorequire concat_fragment'
         req = []
         provider.register
         catalog.resources.each do |r|
@@ -693,7 +697,7 @@ Puppet::Type.newtype(:concat_file) do
                 end
             end
         end
-        info 'autorequire concat_fragment req=' + req.inspect
+        #info 'autorequire concat_fragment req=' + req.inspect
         req
     end
 

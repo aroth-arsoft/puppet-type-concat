@@ -43,7 +43,8 @@ class ConcatFileImpl
             @childs = {}
             @header = nil
             @footer = nil
-            @content = nil
+            @content_set = nil
+            @content_cache = nil
             
             # try to initialize the parent reference immediately (when possible)
             reconnect
@@ -117,41 +118,47 @@ class ConcatFileImpl
         end
 
         def content()
-            if @content == nil
-                @content = ''
+            #@content_cache = nil
+            if @content_cache == nil
+                @content_cache = ''
 
                 if @header != nil
-                    @content += @header
+                    @content_cache += @header
                 end
-                #puts 'content before childs ' + @content
+                if @content_set != nil
+                    @content_cache += @content_set
+                end
+                #puts 'content before childs ' + @content_cache
                 @childs.sort_by { |order, fragment_dict| order }.each do |order, fragment_dict|
                     fragment_dict.sort_by { |fragment_name, fragment| fragment_name }.each do |fragment_name, fragment|
                         child_content = fragment.content()
                         #puts "child content #{fragment_name}=#{child_content}"
-                        @content += child_content
+                        @content_cache += child_content
                     end
                 end
 
                 if @footer != nil
-                    @content += @footer
+                    @content_cache += @footer
                 end
-                #puts "got content for #{@name}=#{@content}"
+                #puts "new content for #{@name}=#{@content_cache}"
             end
-            return @content
+            #puts "got content for #{@name}=#{@content_cache}"
+            return @content_cache
         end
         
         def reset_content()
-            p = @parent
-            while p != nil
-                p.content = nil
-                p = p.parent
+            @content_cache = nil
+            if @parent != nil
+                @parent.reset_content()
             end
         end
 
-        def set(header=nil, footer=nil)
+        def set(header=nil, footer=nil, content=nil)
 
             @header = header
             @footer = footer
+            @content_set = content
+            reset_content
             if @parent == nil and @parent_ref != nil
                 @parent = ConcatFileImpl.get_fragment(@parent_ref)
                 if @parent
@@ -165,8 +172,10 @@ class ConcatFileImpl
             ret = " "*(level * 2)
             header_str = @header ? @header.to_s.gsub(/\n/,'\\n') : 'nil'
             footer_str = @footer ? @footer.to_s.gsub(/\n/,'\\n') : 'nil'
+            content_str = @content_set ? @content_set.to_s.gsub(/\n/,'\\n') : 'nil'
+            content_cache = @content_cache ? 'ok' : 'nil'
             parent_ref_str = @parent_ref ? @parent_ref.to_s : 'nil'
-            ret = ret + "+#{@name} parent_ref=#{parent_ref_str} hdr=\"#{header_str}\" ftr=\"#{footer_str}\"\n"
+            ret = ret + "+#{@name} parent_ref=#{parent_ref_str} cache=#{content_cache} hdr=\"#{header_str}\" cnt=\"#{content_str}\" ftr=\"#{footer_str}\"\n"
 
             @childs.sort_by { |order, fragment_dict| order }.each do |order, fragment_dict|
                 fragment_dict.sort_by { |fragment_name, fragment| fragment_name }.each do |fragment_name, fragment|
@@ -230,6 +239,9 @@ class ConcatFileImpl
         end
         ret = ret + @root.dump(1)
         ret = ret + "}\n"
+        #ret = ret + "content:\n"
+        #ret = ret + @root.content()
+        #ret = ret + "eof:\n"
         return ret
     end
     

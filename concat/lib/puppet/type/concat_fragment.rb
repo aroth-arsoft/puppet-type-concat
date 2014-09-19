@@ -25,14 +25,9 @@ Puppet::Type.newtype(:concat_fragment) do
         def retrieve
             if source = @resource.parameter(:source)
                 #info 'fragment retrieve with source'
-                provider.apply(source.content, nil)
+                provider.apply(@resource[:header], @resource[:footer], source.content)
             else
-                #info 'fragment retrieve content only'
-                if @resource[:header] != nil or @resource[:footer] != nil
-                    provider.apply(@resource[:header], @resource[:footer])
-                else
-                    provider.apply(@resource[:content], nil)
-                end
+                provider.apply(@resource[:header], @resource[:footer], @resource[:content])
             end
             return @resource.should(:ensure)
         end
@@ -236,33 +231,29 @@ Puppet::Type.newtype(:concat_fragment) do
     end
 
 
-    # Autorequire the nearest ancestor directory found in the catalog.
+    # Autorequire the nearest concat_fragment
     autorequire(:concat_fragment) do
-        debug 'autorequire concat_fragment'
-        #raise 'autorequire concat_file'
+        #debug 'autorequire concat_fragment'
         req = []
         #puts 'autorequire concat_fragment on files'
         provider.register
-#         catalog.resources.each do |r|
-#             if r.is_a?(Puppet::Type.type(:concat_fragment))
-#                 if r[:parent] == self[:name]
-#                     #puts 'autorequire concat_file ' + self[:name] + ' ' + r.to_s
-#                     req.push(self[:name])
-#                 end
-#             end
-#         end
-        if self[:parent]
-            req << self[:parent]
+        catalog.resources.each do |r|
+            if r.is_a?(Puppet::Type.type(:concat_fragment))
+                if r[:parent] == self[:name]
+                    #puts 'autorequire concat_file ' + self[:name] + ' ' + r.to_s
+                    req.push(r[:name])
+                elsif r[:target] == self[:name]
+                    req.push(r[:name])
+                end
+            end
         end
-        if self[:target]
-            req << self[:target]
-        end
-        info 'autorequire concat_fragment req=' + req.inspect
+        #info 'autorequire concat_fragment req=' + req.inspect
         req
     end
+
+    # Autorequire the any other concat_file instance used as source
     autorequire(:concat_file) do
-        debug 'autorequire concat_file'
-        #raise 'autorequire concat_file'
+        #debug 'autorequire concat_file'
         req = []
         if self[:target]
             req << self[:target]
@@ -285,11 +276,13 @@ Puppet::Type.newtype(:concat_fragment) do
                 end
             end
         end
-        info 'autorequire concat_file req=' + req.inspect
+        #info 'autorequire concat_file req=' + req.inspect
         req
     end
+
+    # Autorequire the any source file
     autorequire(:file) do
-        debug 'autorequire file'
+        #debug 'autorequire file'
         req = []
         sources = self[:source]
         if sources
@@ -308,7 +301,7 @@ Puppet::Type.newtype(:concat_fragment) do
                 end
             end
         end
-        info 'autorequire file req=' + req.inspect
+        #info 'autorequire file req=' + req.inspect
         req
     end
 

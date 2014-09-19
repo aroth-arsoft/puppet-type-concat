@@ -21,7 +21,7 @@ File { backup => false }
 file {
     '/tmp/include_file':
         mode => 0666,
-        content => "uptime=${::uptime}\n";
+        content => "concat2_2 include\n";
 }
 
 define entity($ensure=present, $parent, $order, $content) {

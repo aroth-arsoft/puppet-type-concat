@@ -2,4 +2,4 @@
 
 SCRIPT_FILE=`readlink -f "$0"`
 SCRIPT_DIR=`dirname "$SCRIPT_FILE"`
-"$SCRIPT_DIR/upstream_puppet" apply -vd --modulepath=$SCRIPT_DIR --graph --graphdir=$SCRIPT_DIR concat_test.pp
+"$SCRIPT_DIR/upstream_puppet" apply -vd --modulepath=$SCRIPT_DIR --graph --graphdir=$SCRIPT_DIR concat_test.pp $@
