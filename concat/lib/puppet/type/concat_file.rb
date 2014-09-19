@@ -662,10 +662,21 @@ Puppet::Type.newtype(:concat_file) do
             nil
         end
     end
+    autorequire(:file) do
+        req = []
+        path = self[:path]
+        if path == nil
+            path = self[:name]
+        end
+        req << path
+
+        info 'autorequire file req=' + req.inspect
+        req
+    end
 
     # Autorequire the nearest ancestor directory found in the catalog.
-    autorequire(:concat_file) do
-        debug 'autorequire concat_file'
+    autorequire(:concat_fragment) do
+        debug 'autorequire concat_fragment'
         #raise 'autorequire concat_file'
         req = []
         provider.register
@@ -673,16 +684,16 @@ Puppet::Type.newtype(:concat_file) do
             if r.is_a?(Puppet::Type.type(:concat_fragment))
                 if r[:target] == self[:name]
                     #info 'autorequire concat_file add ' + r.to_s
-                    req.push(r.to_s)
+                    req.push(r[:name])
                 elsif r[:parent] == self[:name]
                     #info 'autorequire concat_file add ' + r.to_s
-                    req.push(r.to_s)
+                    req.push(r[:name])
                 else
                     #info 'autorequire concat_file ignore ' + r.to_s
                 end
             end
         end
-        info 'autorequire concat_file req=' + req.inspect
+        info 'autorequire concat_fragment req=' + req.inspect
         req
     end
 

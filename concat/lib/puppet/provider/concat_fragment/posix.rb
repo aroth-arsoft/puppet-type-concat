@@ -25,5 +25,6 @@ Puppet::Type.type(:concat_fragment).provide(:posix) do
             parent = resource[:target]
         end
         @fragment = ConcatFileImpl.register_fragment(resource[:name], parent, resource[:order].to_i)
+        ConcatFileImpl.dump
     end
 end

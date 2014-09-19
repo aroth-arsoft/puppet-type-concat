@@ -238,18 +238,34 @@ Puppet::Type.newtype(:concat_fragment) do
 
     # Autorequire the nearest ancestor directory found in the catalog.
     autorequire(:concat_fragment) do
-        debug 'autorequire concat_file'
+        debug 'autorequire concat_fragment'
         #raise 'autorequire concat_file'
         req = []
         #puts 'autorequire concat_fragment on files'
         provider.register
-        catalog.resources.each do |r|
-            if r.is_a?(Puppet::Type.type(:concat_fragment))
-                if r[:parent] == self[:name]
-                    #puts 'autorequire concat_file ' + self[:name] + ' ' + r.to_s
-                    req.push(r.to_s)
-                end
-            end
+#         catalog.resources.each do |r|
+#             if r.is_a?(Puppet::Type.type(:concat_fragment))
+#                 if r[:parent] == self[:name]
+#                     #puts 'autorequire concat_file ' + self[:name] + ' ' + r.to_s
+#                     req.push(self[:name])
+#                 end
+#             end
+#         end
+        if self[:parent]
+            req << self[:parent]
+        end
+        if self[:target]
+            req << self[:target]
+        end
+        info 'autorequire concat_fragment req=' + req.inspect
+        req
+    end
+    autorequire(:concat_file) do
+        debug 'autorequire concat_file'
+        #raise 'autorequire concat_file'
+        req = []
+        if self[:target]
+            req << self[:target]
         end
         sources = self[:source]
         if sources
@@ -263,18 +279,36 @@ Puppet::Type.newtype(:concat_fragment) do
                     #debug 'autorequire concat_fragment got path ' + path.to_s
                     r = catalog.resource(:concat_file, path)
                     if r
-                        req << r
-                    else
-                        r = catalog.resource(:file, path)
-                        if r
-                            req << r
-                        end
+                        req << path
                     end
                     #req.push(path)
                 end
             end
         end
-        info 'autorequire concat_fragment req=' + req.inspect
+        info 'autorequire concat_file req=' + req.inspect
+        req
+    end
+    autorequire(:file) do
+        debug 'autorequire file'
+        req = []
+        sources = self[:source]
+        if sources
+            #debug 'autorequire concat_fragment ' + sources.inspect
+            sources = [sources] unless sources.is_a?(Array)
+            sources.each do |source|
+                uri = URI.parse(URI.escape(source))
+                if uri.scheme == 'file'
+                    path = Puppet::Util.uri_to_path(uri)
+
+                    #debug 'autorequire concat_fragment got path ' + path.to_s
+                    r = catalog.resource(:file, path)
+                    if r
+                        req << path
+                    end
+                end
+            end
+        end
+        info 'autorequire file req=' + req.inspect
         req
     end
 

@@ -86,6 +86,10 @@ class basic_one inherits all_files {
             parent => 'concat2',
             order => 1,
             content => "concat2_1\n";
+        'concat2_1b':
+            parent => 'concat2',
+            order => 1,
+            content => "concat2_1b\n";
         'concat2_3a':
             parent => 'concat2',
             order => 3,
@@ -117,5 +121,5 @@ class basic_one inherits all_files {
 }
 
 include basic_one
-include basic_two
+#include basic_two
 include deep_down
